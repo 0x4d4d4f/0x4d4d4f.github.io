@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0x4d4d4f</title>
+<meta name="description" content="0x4d4d4f: security analyst focused on network security and protocol analysis.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self' https://one.one.one.one https://www.cloudflare.com; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230d1117'/%3E%3Cpath d='M4 5l3 3-3 3' fill='none' stroke='%233fb950' stroke-width='1.6'/%3E%3Cpath d='M8 11h4' stroke='%23e6edf3' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --canvas: #0d1117; --bar: #161b22; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --green: #3fb950; --blue: #58a6ff;
+    --yellow: #d29922; --red: #f85149; --purple: #a371f7; --cyan: #39c5cf;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  /* The whole page is the console, as a machine's screen is while it boots. */
+  html { background: var(--canvas); color: var(--fg); }
+  body { margin: 0; min-height: 100vh; font: 15px/1.55 var(--mono); padding: 28px 36px 40px; cursor: text; }
+  #screen { white-space: pre-wrap; word-break: break-word; }
+  .line { min-height: 1.55em; }
+  .muted { color: var(--muted); } .green { color: var(--green); } .blue { color: var(--blue); }
+  .yellow { color: var(--yellow); } .red { color: var(--red); } .purple { color: var(--purple); } .cyan { color: var(--cyan); }
+  .bold { font-weight: 700; }
+  a { color: var(--blue); text-decoration: none; } a:hover, a:focus-visible { text-decoration: underline; }
+  .fetch { display: grid; grid-template-columns: auto 1fr; gap: 0 28px; margin: 4px 0 8px; }
+  .fetch pre { margin: 0; font: inherit; color: var(--blue); }
+  .kv { display: grid; grid-template-columns: 9.5ch 1fr; }
+  .kv .k { color: var(--green); }
+  .palette { display: flex; margin-top: 6px; } .palette i { width: 26px; height: 14px; display: block; }
+  .bar { display: inline-block; height: 9px; border-radius: 2px; vertical-align: middle; background: var(--border); width: 160px; position: relative; overflow: hidden; margin: 0 10px; }
+  .bar b { position: absolute; inset: 0 auto 0 0; display: block; }
+  .langs { display: grid; grid-template-columns: 12ch max-content max-content; justify-content: start; align-items: center; }
+  table.addr { border-collapse: collapse; margin: 4px 0; }
+  table.addr td { padding: 1px 16px 1px 0; vertical-align: top; }
+  button.copy { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; cursor: pointer; }
+  button.copy:hover, button.copy:focus-visible { color: var(--fg); border-color: var(--muted); outline: none; }
+  form { display: flex; gap: 1ch; }
+  form[hidden] { display: none; }
+  label { white-space: nowrap; }
+  input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--fg); font: inherit; caret-color: var(--green); padding: 0; }
+  .hint { color: var(--muted); }
+  @media (max-width: 640px) {
+    body { padding: 16px 16px 28px; font-size: 13px; }
+    .fetch { grid-template-columns: 1fr; } .fetch pre { display: none; }
+    .bar { width: 90px; }
+  }
+</style>
+</head>
+<body>
+<main id="screen" role="log" aria-live="polite" aria-label="Terminal"></main>
+  <form id="prompt" hidden autocomplete="off">
+    <label for="input"><span class="green bold">0x4d4d4f@github.io</span><span class="muted">:</span><span class="blue bold">~</span><span class="muted">$</span></label>
+    <input id="input" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Type a command, or help">
+  </form>
+<noscript><p style="padding:0 20px">0x4d4d4f: security analyst focused on network security and protocol analysis. <a href="https://github.com/0x4d4d4f">github.com/0x4d4d4f</a></p></noscript>
+<script>
+'use strict';
+
+const screen = document.getElementById('screen');
+const form = document.getElementById('prompt');
+const input = document.getElementById('input');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let skipping = reduced;
+let stats = null;
+/** What Cloudflare saw of this visitor: ip, loc, colo, tls, http. Shown here, sent nowhere. */
+let visitor = null;
+const history = [];
+let historyAt = 0;
+const started = Date.now();
+
+const DONATE = [
+  ['Bitcoin', 'bc1qfc2et2872t038d42hd9dp05crjtrkuq8r08ewm'],
+  ['Ethereum (ERC20)', '0x169c2C1aF5536D0fE778A694d2801486634A76C8'],
+  ['BNB Smart Chain (BEP20)', '0x169c2C1aF5536D0fE778A694d2801486634A76C8'],
+  ['Tron (TRC20)', 'TKT3mWXjy7TumwVee99XDqogtAxx9jELJX'],
+  ['Solana', 'EAV13QiaX5gQsV1cej1iqErPf8KmXndUD5p8MmT59c2r'],
+];
+
+const DOOR = [
+  '+------------+',
+  '| +--------+ |',
+  '| |        | |',
+  '| |        | |',
+  '| +--------+ |',
+  '|     __     |',
+  '|    (  )    |',
+  '|     )(     |',
+  '|    /__\\    |',
+  '| +--------+ |',
+  '| |        | |',
+  '| +--------+ |',
+  '+------------+',
+];
+
+// --- output -----------------------------------------------------------------
+
+/** One line; parts are strings or [text, className] pairs. */
+function line(...parts) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  for (const part of parts) {
+    if (typeof part === 'string') div.append(part);
+    else if (part instanceof Node) div.append(part);
+    else {
+      const span = document.createElement('span');
+      span.className = part[1];
+      span.textContent = part[0];
+      div.append(span);
+    }
+  }
+  screen.append(div);
+  scrollDown();
+  return div;
+}
+
+function scrollDown() {
+  document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
+}
+
+function link(text, href) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.textContent = text;
+  a.rel = 'noopener';
+  return a;
+}
+
+const sleep = (ms) => (skipping ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, ms)));
+
+async function type(div, text, className, speed = 55) {
+  const span = document.createElement('span');
+  if (className) span.className = className;
+  div.append(span);
+  for (const char of text) {
+    span.textContent += char;
+    await sleep(speed + Math.random() * 40);
+  }
+}
+
+// --- boot -------------------------------------------------------------------
+
+const KERNEL = [
+  'Linux version 6.6.0-netsec (0x4d4d4f@github.io) #1 SMP PREEMPT_DYNAMIC',
+  'Command line: BOOT_IMAGE=/vmlinuz root=/dev/edge ro quiet lockdown=confidentiality',
+  'Kernel is locked down from command line; see man kernel_lockdown.7',
+  'random: crng init done',
+  'NET: Registered PF_INET protocol family',
+  'NET: Registered PF_INET6 protocol family',
+  'TCP: Hash tables configured (established 65536 bind 65536)',
+  'audit: initializing netlink subsys (enabled)',
+  'netfilter: nf_tables loaded; default policy: drop',
+  'EXT4-fs (sda1): mounted filesystem, read-only, ordered data mode',
+];
+
+const UNITS = [
+  ['OK', 'Started Journal Service.'],
+  ['OK', 'Reached target Network.'],
+  ['OK', 'Started nftables: inbound denied unless allowed.'],
+  ['OK', 'Started OpenSSH server daemon (keys only, no root login).'],
+  ['OK', 'Started Packet capture on eth0.'],
+  ['VISITOR', ''],
+  ['OK', 'Finished Verify TLS chains against pinned roots.'],
+  ['WARN', 'Telnet answering on 192.0.2.23:23 — flagged for review.'],
+  ['OK', 'Reached target Multi-User System.'],
+];
+
+async function boot() {
+  form.hidden = true;
+  screen.textContent = '';
+  let clock = 0;
+  for (const text of KERNEL) {
+    clock += 0.04 + Math.random() * 0.12;
+    line([`[${clock.toFixed(6).padStart(12)}] `, 'muted'], text);
+    await sleep(60 + Math.random() * 90);
+  }
+  line('');
+  for (const [state, text] of UNITS) {
+    if (state === 'VISITOR') {
+      if (visitor) {
+        line('[', ['  OK  ', 'green'], '] Accepted connection from ', [visitor.ip, 'cyan'],
+          ` (${visitor.loc}) via Cloudflare ${visitor.colo}, ${visitor.tls}, ${visitor.http}.`);
+        await sleep(110 + Math.random() * 120);
+      }
+      continue;
+    }
+    const color = state === 'OK' ? 'green' : 'yellow';
+    line('[', [state === 'OK' ? '  OK  ' : ' WARN ', color], '] ', text);
+    await sleep(110 + Math.random() * 120);
+  }
+  line('');
+  line(['0x4d4d4f.github.io 6.6.0-netsec tty1', 'muted']);
+  line('');
+  const login = line('0x4d4d4f.github.io login: ');
+  await sleep(500);
+  await type(login, '0x4d4d4f');
+  line('Password: ');
+  await sleep(600);
+  const last = new Date(Date.now() - 864e5);
+  line(['Last login: ' + last.toUTCString().replace(' GMT', '') + ' from ' + (visitor?.ip ?? '192.0.2.1'), 'muted']);
+  line('');
+  await run('neofetch', true);
+  line(['Type ', 'hint'], ['help', 'green'], [' to see what this terminal can do.', 'hint']);
+  line('');
+  skipping = reduced;
+  form.hidden = false;
+  scrollDown();
+  input.focus({ preventScroll: true });
+}
+
+// --- commands ----------------------------------------------------------------
+
+function uptime() {
+  const s = Math.floor((Date.now() - started) / 1000);
+  return `${Math.floor(s / 60)} min, ${s % 60} s`;
+}
+
+function fetchBlock() {
+  const wrap = document.createElement('div');
+  wrap.className = 'fetch';
+  const art = document.createElement('pre');
+  art.setAttribute('aria-hidden', 'true');
+  art.textContent = DOOR.join('\n');
+  const info = document.createElement('div');
+  const head = document.createElement('div');
+  head.append(Object.assign(document.createElement('span'), { className: 'green bold', textContent: '0x4d4d4f' }), '@', Object.assign(document.createElement('span'), { className: 'green bold', textContent: 'github.io' }));
+  const rule = Object.assign(document.createElement('div'), { className: 'muted', textContent: '─'.repeat(24) });
+  const kv = document.createElement('div');
+  kv.className = 'kv';
+  const rows = [
+    ['Role', 'security analyst'],
+    ['Focus', 'network security · protocol analysis'],
+    ['Also', 'serverless · Cloudflare Workers · open source'],
+    ['OS', 'Linux'],
+    ['Langs', 'TypeScript · Go · Rust · C · Python · Shell'],
+    ['Tools', 'Nmap · Burp Suite'],
+    ['Motto', 'verify, then trust'],
+    ['Uptime', uptime()],
+  ];
+  if (stats) {
+    rows.push(['Commits', `${stats.commits} in the last 12 months`]);
+    rows.push(['Repos', `${stats.repos} contributed to this year`]);
+  }
+  for (const [k, v] of rows) {
+    kv.append(Object.assign(document.createElement('span'), { className: 'k', textContent: k }));
+    kv.append(Object.assign(document.createElement('span'), { textContent: v }));
+  }
+  info.append(head, rule, kv);
+  if (stats?.languages?.length) {
+    const langs = document.createElement('div');
+    langs.className = 'langs';
+    langs.style.marginTop = '8px';
+    for (const { name, color, share } of stats.languages.slice(0, 5)) {
+      langs.append(Object.assign(document.createElement('span'), { className: 'muted', textContent: name }));
+      const bar = document.createElement('span');
+      bar.className = 'bar';
+      const fill = document.createElement('b');
+      fill.style.width = `${Math.max(2, share * 100)}%`;
+      fill.style.background = /^#[0-9a-f]{3,8}$/i.test(color) ? color : '#8b949e';
+      bar.append(fill);
+      langs.append(bar, Object.assign(document.createElement('span'), { className: 'muted', textContent: `${(share * 100).toFixed(1)}%` }));
+    }
+    info.append(langs);
+  }
+  const palette = document.createElement('div');
+  palette.className = 'palette';
+  palette.setAttribute('aria-hidden', 'true');
+  for (const color of ['--red', '--yellow', '--green', '--blue', '--purple', '--cyan', '--muted', '--fg']) {
+    const i = document.createElement('i');
+    i.style.background = `var(${color})`;
+    palette.append(i);
+  }
+  info.append(palette);
+  wrap.append(art, info);
+  return wrap;
+}
+
+function donate() {
+  line(['Check the network before sending: a token on the wrong chain is lost.', 'yellow']);
+  const table = document.createElement('table');
+  table.className = 'addr';
+  for (const [network, address] of DONATE) {
+    const row = table.insertRow();
+    row.insertCell().append(Object.assign(document.createElement('span'), { className: 'muted', textContent: network }));
+    row.insertCell().append(Object.assign(document.createElement('span'), { textContent: address }));
+    const button = Object.assign(document.createElement('button'), { className: 'copy', type: 'button', textContent: 'copy' });
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(address);
+        button.textContent = 'copied';
+      } catch {
+        button.textContent = 'select it';
+      }
+      setTimeout(() => (button.textContent = 'copy'), 1500);
+    });
+    row.insertCell().append(button);
+  }
+  line(table);
+}
+
+const FILES = {
+  'about.txt': () => [
+    'Security analyst, focused on network security: what crosses the wire,',
+    'how systems decide to trust each other, and what an attacker can do in',
+    'between. Much of it these days is on serverless platforms, mostly',
+    'Cloudflare, where I also build open-source tools.',
+  ].forEach((text) => line(text)),
+  'skills.txt': () => COMMANDS.skills(),
+  'donate.txt': () => donate(),
+};
+
+const COMMANDS = {
+  help() {
+    const rows = [
+      ['whoami', 'who this is'], ['about', 'a little more'], ['neofetch', 'the summary'],
+      ['skills', 'languages and tools'], ['contact', 'where to find me'], ['donate', 'support the work'],
+      ['trace', 'what Cloudflare sees of you'],
+      ['ls, cat', 'read the files'], ['history, clear', 'the usual'], ['reboot', 'watch it boot again'],
+    ];
+    for (const [c, d] of rows) line([c.padEnd(16), 'green'], [d, 'muted']);
+  },
+  whoami() { line('0x4d4d4f — security analyst, network security'); },
+  about() { FILES['about.txt'](); },
+  neofetch() { line(fetchBlock()); },
+  skills() {
+    line(['languages  ', 'green'], 'TypeScript · Go · Rust · C · Python · Shell');
+    line(['tools      ', 'green'], 'Nmap · Burp Suite');
+    line(['platforms  ', 'green'], 'Cloudflare Workers · WebAssembly · Docker · Linux');
+  },
+  contact() {
+    line(['github     ', 'green'], link('github.com/0x4d4d4f', 'https://github.com/0x4d4d4f'));
+    line(['security   ', 'green'], ['report privately, through a repository\'s Security tab', 'muted']);
+  },
+  donate,
+  trace() {
+    if (!visitor) return line(['trace: Cloudflare could not be reached from this browser (blocked, or offline).', 'yellow']);
+    for (const [key, label] of [['ip', 'ip'], ['loc', 'country'], ['colo', 'colo'], ['tls', 'tls'], ['http', 'http'], ['warp', 'warp']]) {
+      if (visitor[key]) line([label.padEnd(10), 'green'], [visitor[key], key === 'ip' ? 'cyan' : '']);
+    }
+    line(['Read by your browser from one.one.one.one/cdn-cgi/trace and shown only here; nothing is sent or stored.', 'muted']);
+  },
+  ls() { line(Object.keys(FILES).map((f) => f.padEnd(14)).join('')); },
+  cat(args) {
+    if (!args[0]) return line(['cat: missing file operand', 'red']);
+    const file = FILES[args[0].replace(/^\.\//, '')];
+    if (!file) return line([`cat: ${args[0]}: No such file or directory`, 'red']);
+    file();
+  },
+  history() { history.forEach((c, i) => line([String(i + 1).padStart(4) + '  ', 'muted'], c)); },
+  clear() { screen.textContent = ''; },
+  date() { line(new Date().toString()); },
+  uptime() { line(`up ${uptime()}, 1 user`); },
+  uname(args) { line(args.includes('-a') ? 'Linux 0x4d4d4f.github.io 6.6.0-netsec #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux' : 'Linux'); },
+  echo(args) { line(args.join(' ')); },
+  pwd() { line('/home/0x4d4d4f'); },
+  sudo() { line(['0x4d4d4f is not in the sudoers file. This incident will be reported.', 'red']); },
+  exit() { line('logout'); setTimeout(() => boot(), 900); return 'stop'; },
+  reboot() { return COMMANDS.exit(); },
+};
+
+async function run(raw, echoed = false) {
+  const command = raw.trim();
+  if (echoed) {
+    const prompt = line(['0x4d4d4f@github.io', 'green bold'], [':', 'muted'], ['~', 'blue bold'], ['$ ', 'muted']);
+    await type(prompt, command, '', 70);
+  }
+  if (!command) return;
+  history.push(command);
+  historyAt = history.length;
+  const [name, ...args] = command.split(/\s+/);
+  const handler = Object.hasOwn(COMMANDS, name) ? COMMANDS[name] : null;
+  if (!handler) line([`bash: ${name}: command not found`, 'red'], ['  (try help)', 'muted']);
+  else if (handler(args) === 'stop') return;
+  if (!echoed) line('');
+}
+
+// --- input ------------------------------------------------------------------
+
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const value = input.value;
+  input.value = '';
+  line(['0x4d4d4f@github.io', 'green bold'], [':', 'muted'], ['~', 'blue bold'], ['$ ', 'muted'], value);
+  void run(value);
+});
+
+input.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowUp' && historyAt > 0) {
+    input.value = history[--historyAt];
+    event.preventDefault();
+  } else if (event.key === 'ArrowDown') {
+    historyAt = Math.min(history.length, historyAt + 1);
+    input.value = history[historyAt] ?? '';
+    event.preventDefault();
+  } else if (event.key === 'Tab') {
+    event.preventDefault();
+    const [word, ...rest] = input.value.split(' ');
+    const pool = rest.length ? Object.keys(FILES) : Object.keys(COMMANDS);
+    const target = rest.length ? rest.at(-1) : word;
+    const match = pool.filter((name) => name.startsWith(target));
+    if (match.length === 1) input.value = rest.length ? [word, ...rest.slice(0, -1), match[0]].join(' ') : match[0] + ' ';
+  } else if (event.key === 'l' && event.ctrlKey) {
+    event.preventDefault();
+    COMMANDS.clear();
+  }
+});
+
+// Any key or click during the boot skips to the prompt.
+const skip = () => { if (form.hidden) skipping = true; };
+addEventListener('keydown', skip);
+addEventListener('pointerdown', skip);
+document.addEventListener('click', () => { if (!form.hidden && !getSelection().toString()) input.focus({ preventScroll: true }); });
+
+/** Cloudflare's trace, key=value lines; a few seconds at most, or nothing. */
+async function trace() {
+  for (const url of ['https://one.one.one.one/cdn-cgi/trace', 'https://www.cloudflare.com/cdn-cgi/trace']) {
+    try {
+      const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(3000) });
+      if (!response.ok) continue;
+      const fields = Object.fromEntries(
+        (await response.text()).split('\n').map((row) => row.split('=')).filter((pair) => pair.length === 2),
+      );
+      // Only what is shown, and only if it looks like what it claims to be.
+      if (/^[0-9a-f.:]+$/i.test(fields.ip ?? '')) {
+        return { ip: fields.ip, loc: fields.loc ?? '??', colo: fields.colo ?? '???', tls: fields.tls ?? 'TLS', http: fields.http ?? 'http', warp: fields.warp };
+      }
+    } catch {
+      // Blocked, offline or slow: try the next, then do without.
+    }
+  }
+  return null;
+}
+
+Promise.all([
+  fetch('stats.json', { cache: 'no-cache' }).then((response) => (response.ok ? response.json() : null)).catch(() => null),
+  trace(),
+]).then(([data, seen]) => {
+  stats = data;
+  visitor = seen;
+  boot();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# Builds the site and publishes it with GitHub Pages: the terminal page,
+# and the profile drawings with today's numbers. Daily, and on every push.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Draw the profile with today's numbers
+        run: node scripts/render.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: cp -r site/. build/
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # Leaves one run and one deployment behind: this one. What came before is
+  # history nobody needs, and a year of daily runs would be 365 of it.
+  tidy:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      deployments: write
+    steps:
+      - name: Delete earlier runs and deployments
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_id }}
+        run: |
+          gh api --paginate "repos/$REPO/actions/runs?per_page=100&status=completed" \
+            --jq ".workflow_runs[] | select(.id != $RUN) | .id" |
+            while read -r id; do gh api -X DELETE "repos/$REPO/actions/runs/$id" --silent || true; done
+          latest=$(gh api "repos/$REPO/deployments?environment=github-pages&per_page=1" --jq '.[0].id // empty')
+          gh api --paginate "repos/$REPO/deployments?environment=github-pages&per_page=100" --jq '.[].id' |
+            while read -r id; do
+              [ "$id" = "$latest" ] && continue
+              gh api -X POST "repos/$REPO/deployments/$id/statuses" -f state=inactive --silent || true
+              gh api -X DELETE "repos/$REPO/deployments/$id" --silent || true
+            done
